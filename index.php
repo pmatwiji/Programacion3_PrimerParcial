@@ -8,6 +8,7 @@ require_once './datos.php';
 require_once './auth.php';
 require_once './materia.php';
 require_once './profesor.php';
+require_once './asignacion.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $_SERVER['PATH_INFO'] ?? '';
@@ -15,6 +16,7 @@ $key = 'pro3-parcial';
 $usuarios = array();
 $materias = array();
 $profesores = array();
+$asignaciones = array();
 
 switch ($path) {
     case '/usuario':
@@ -102,15 +104,16 @@ switch ($path) {
                                 $materias = array();
                                 array_push($materias,$materia);
                                 $materias = Datos::guardarUno('materias.json',$materias);
-                                } else {
-                                    $materias = Datos::guardarMateria('materias.json',$materia); 
-                                    echo "Cargado exitosamente".PHP_EOL;
-                                }
+                                echo "Cargado exitosamente".PHP_EOL;
+                            } else {
+                                $materias = Datos::guardarMateria('materias.json',$materia); 
+                                echo "Cargado exitosamente".PHP_EOL;
                             }
-                            else 
-                            {
-                                echo 'Materia no valida';
-                            }
+                        }
+                        else 
+                        {
+                            echo 'Materia no valida';
+                        }
                     } else {
                         echo "Error, faltan datos";
                     }
@@ -167,6 +170,7 @@ switch ($path) {
                                 array_push($profesores,$profesor);
                                 $profesores = Datos::guardarUno('profesores.json',$profesores);
                                 move_uploaded_file($origen,$destino);
+                                echo "Profesor cargado con exito";
                             } else {
 
                                 foreach ($profesores as $value) {
@@ -217,8 +221,8 @@ switch ($path) {
         switch ($method) {
             case 'POST':
                 $decoded = Auth::decodeToken('token',$key);
-                $profesorRepetido = false;
-                $materiaRepetida = false;
+                $asignacionRepetida = false;
+
 
                 if($decoded)
                 {
@@ -228,9 +232,37 @@ switch ($path) {
     
                     if(isset($legajo) && isset($idMateria) && isset($turno)) {
                             
-                        if(!empty($nombre) && !empty($legajo) && !empty($turno))
+                        if(!empty($legajo) && !empty($idMateria) && !empty($turno))
                         {
-                            
+                            $asignaciones = Datos::leerJson('materias-profesores.json');
+
+                            $asignacion = new Asignacion($legajo,$idMateria,$turno);
+
+                            if($asignaciones == false)
+                            {
+                                $asignaciones = array();
+                                array_push($asignaciones,$asignacion);
+                                $asignaciones = Datos::guardarUno('materias-profesores.json',$asignaciones);
+                            }
+                            else
+                            {
+                                foreach ($asignaciones as $value) {
+                                    if($value->legajoProfesor == $legajo && $value->idMateria == $idMateria){
+                                        $asignacionRepetida = true;
+                                        break;
+                                    }
+
+                                }
+
+                                if(!$asignacionRepetida){
+
+                                    $asignaciones=Datos::guardarAsignacion('materias-profesores.json',$asignacion);
+                                    echo "Asignacion cargada con exito";
+                                }else {
+                                    echo "Asignacion repetida";
+                                }
+                            }
+
                         }
                         else 
                         {
@@ -241,6 +273,15 @@ switch ($path) {
                     }
                 } else {
                     echo "Token incorrecto";
+                }
+            break;
+
+            case 'GET':
+                $decoded = Auth::decodeToken('token',$key);
+                if($decoded)
+                {
+                    $lista = Datos::leerJSON('materias-profesores.json');
+                    print_r($lista);
                 }
                 break;
             

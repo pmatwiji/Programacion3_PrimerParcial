@@ -59,6 +59,18 @@ class Datos {
         return $rta;
     }
 
+    public static function guardarAsignacion($archivo,$objeto) {
+        $arrayJSON = array();
+        $arrayJSON = Datos::leerJson($archivo);
+        
+        array_push($arrayJSON,$objeto);
+        $file = fopen($archivo, 'w');
+        $rta = fwrite($file,serialize($arrayJSON));
+        fclose($file);
+        
+        return $rta;
+    }
+
 
     public static function leerJson($archivo) {
         $arrayJSON = array();
@@ -70,32 +82,6 @@ class Datos {
         return $arrayJSON;
     }
 
-    public static function marcaDeAgua($original, $watermark, $destino, $margenX, $margenY, $transparencia)
-    {
-        $imagenBase  = imagecreatefromjpeg($original);
-        $imagenMarca = imagecreatefrompng($watermark);
-        
-        $width = imagesx($imagenMarca);
-        $height = imagesy($imagenMarca);
-
-        $imagenMarca = imagescale($imagenMarca,124,124);
-
-        if(file_exists($original) && file_exists($watermark))
-        {
-            if($transparencia < 0 || $transparencia > 100)
-            {
-                $transparencia = 0;
-            }
-            imagecopymerge($imagenBase,$imagenMarca,imagesx($imagenBase)-$width-$margenX,imagesy($imagenBase)-$height-$margenY,0,0,$width,$height,$transparencia);
-            imagepng($imagenBase,$destino);
-            imagedestroy($imagenBase);
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
 
 }
 
